@@ -29,17 +29,22 @@ Route::get('/worker/dashboard', function () {
     return view('index');
 });
 
-Route::get('/admin', function () {
-    return view('index');
-});
+// Admin routes
+Route::get('/admin', [App\Http\Controllers\AdminController::class, 'login'])->name('admin.login');
+Route::post('/admin/login', [App\Http\Controllers\AdminController::class, 'authenticate'])->name('admin.authenticate');
+Route::get('/admin/dashboard', [App\Http\Controllers\AdminController::class, 'dashboard'])->name('admin.dashboard');
+Route::post('/admin/logout', [App\Http\Controllers\AdminController::class, 'logout'])->name('admin.logout');
 
-Route::get('/admin/login', function () {
-    return view('index');
-});
+// Admin worker management
+Route::get('/admin/workers/create', [App\Http\Controllers\AdminController::class, 'createWorker'])->name('admin.worker.create');
+Route::post('/admin/workers', [App\Http\Controllers\AdminController::class, 'storeWorker'])->name('admin.worker.store');
+Route::delete('/admin/workers/{id}', [App\Http\Controllers\AdminController::class, 'deleteWorker'])->name('admin.worker.delete');
 
-Route::get('/admin/dashboard', function () {
-    return view('index');
-});
+// Admin conference management
+Route::delete('/admin/conferences/{id}', [App\Http\Controllers\AdminController::class, 'deleteConference'])->name('admin.conference.delete');
+
+// Admin settings
+Route::post('/admin/settings/download-links', [App\Http\Controllers\AdminController::class, 'updateDownloadLinks'])->name('admin.settings.download-links');
 
 Route::get('/join/{inviteCode}', function ($inviteCode) {
     return view('index');
