@@ -10,7 +10,7 @@ use App\Models\Download;
 use App\Services\TelegramService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
-
+use App\Models\Worker;
 class ConferenceController extends Controller
 {
     public function getWorkerTag($conferenceId)
