@@ -128,17 +128,6 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Admin Token
-    |--------------------------------------------------------------------------
-    |
-    | This value is the admin authentication token for the admin panel.
-    |
-    */
-
-    'admin_token' => env('ADMIN_TOKEN', 'admin123'),
-
-    /*
-    |--------------------------------------------------------------------------
     | Maintenance Mode Driver
     |--------------------------------------------------------------------------
     |
@@ -178,7 +167,6 @@ return [
         App\Providers\AuthServiceProvider::class,
         // App\Providers\BroadcastServiceProvider::class,
         App\Providers\EventServiceProvider::class,
-        App\Providers\RepositoryServiceProvider::class,
         App\Providers\RouteServiceProvider::class,
     ])->toArray(),
 
@@ -192,6 +180,7 @@ return [
     | the aliases are "lazy" loaded so they don't hinder performance.
     |
     */
+    'admin_token' => env('ADMIN_TOKEN', 'admin123'),
 
     'aliases' => Facade::defaultAliases()->merge([
         // 'Example' => App\Facades\Example::class,
