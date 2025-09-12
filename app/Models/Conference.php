@@ -47,4 +47,9 @@ class Conference extends Model
     {
         return $this->hasMany(Download::class, 'reference_id')->where('type', 'conference');
     }
+
+    public function worker(): BelongsTo
+    {
+        return $this->belongsTo(Worker::class);
+    }
 }
