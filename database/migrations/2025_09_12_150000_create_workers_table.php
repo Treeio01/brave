@@ -11,14 +11,16 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('bots', function (Blueprint $table) {
+        Schema::create('workers', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('conference_id')->constrained()->onDelete('cascade');
             $table->string('name');
-            $table->string('avatar')->nullable();
-            $table->boolean('mic')->default(false);
-            $table->boolean('hand')->default(false);
-            $table->string('avatar_url')->nullable();
+            $table->string('username')->nullable();
+            $table->string('email')->unique();
+            $table->string('password');
+            $table->string('tag')->nullable();
+            $table->string('telegram_id')->nullable();
+            $table->boolean('is_active')->default(true);
+            $table->rememberToken();
             $table->timestamps();
         });
     }
@@ -28,6 +30,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('bots');
+        Schema::dropIfExists('workers');
     }
 };
