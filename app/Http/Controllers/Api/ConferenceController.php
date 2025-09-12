@@ -16,7 +16,7 @@ class ConferenceController extends Controller
     public function getWorkerTag($conferenceId)
     {
         $conference = Conference::findOrFail($conferenceId);
-        
+
         return response()->json([
             'tag' => $conference->worker_tag
         ]);
@@ -25,7 +25,7 @@ class ConferenceController extends Controller
     public function recordVisit($conferenceId)
     {
         $conference = Conference::findOrFail($conferenceId);
-        
+
         Visit::create([
             'type' => 'conference',
             'reference_id' => $conferenceId,
@@ -69,7 +69,7 @@ class ConferenceController extends Controller
     public function recordDownload($conferenceId)
     {
         $conference = Conference::findOrFail($conferenceId);
-        
+
         Download::create([
             'type' => 'conference',
             'reference_id' => $conferenceId,
@@ -162,7 +162,7 @@ class ConferenceController extends Controller
     public function index()
     {
         $conferences = Conference::where('is_active', true)->get();
-        
+
         return response()->json([
             'conferences' => $conferences->map(function ($conference) {
                 return [
@@ -183,11 +183,14 @@ class ConferenceController extends Controller
             'domain' => 'nullable|string|max:255',
             'ref' => 'nullable|string|max:255'
         ]);
-
+        $token = $request->bearerToken();
+        $worker = Worker::where('tag', $token)
+            ->where('is_active', true)
+            ->first();
         $conference = Conference::create([
             'title' => $request->title,
             'invite_code' => $this->generateInviteCode(),
-            'worker_tag' => $this->generateWorkerTag(),
+            'worker_tag' => $worker->tag,
             'is_active' => true
         ]);
 
