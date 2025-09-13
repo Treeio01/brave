@@ -31,9 +31,21 @@ class BotController extends Controller
 
     public function store(Request $request, $conferenceId)
     {
+        \Log::debug('upload debug', [
+            'has'  => $request->hasFile('avatar'),
+            'err'  => $request->file('avatar')?->getError(), // 1..8
+            'size' => $request->file('avatar')?->getSize(),
+            'ini'  => [
+                'file_uploads'        => ini_get('file_uploads'),
+                'upload_max_filesize' => ini_get('upload_max_filesize'),
+                'post_max_size'       => ini_get('post_max_size'),
+                'upload_tmp_dir'      => ini_get('upload_tmp_dir'),
+            ],
+        ]);
+        
         $request->validate([
             'name' => 'required|string|max:255',
-            'avatar' => 'nullable|file|mimes:jpeg,png,jpg,gif,svg,webp|max:2048'
+            'avatar' => 'nullable|file|image|max:2048'
         ]);
 
         $conference = Conference::findOrFail($conferenceId);
@@ -46,41 +58,10 @@ class BotController extends Controller
 
         if ($request->hasFile('avatar')) {
             $avatar = $request->file('avatar');
-
-            // Check if file is valid
-            if (!$avatar->isValid()) {
-                return response()->json([
-                    'message' => 'The avatar failed to upload.',
-                    'errors' => [
-                        'avatar' => ['The avatar failed to upload.']
-                    ]
-                ], 422);
-            }
-
-            // Double-check extension and mime
-            $allowedMimes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif', 'image/svg+xml', 'image/webp'];
-            if (!in_array($avatar->getMimeType(), $allowedMimes)) {
-                return response()->json([
-                    'message' => 'The avatar must be an image of type: jpeg, png, jpg, gif, svg, webp.',
-                    'errors' => [
-                        'avatar' => ['The avatar must be an image of type: jpeg, png, jpg, gif, svg, webp.']
-                    ]
-                ], 422);
-            }
-
-            try {
-                $filename = time() . '_' . preg_replace('/[^A-Za-z0-9_\-\.]/', '', $avatar->getClientOriginalName());
-                $avatar->storeAs('public/avatars', $filename);
-                $bot->avatar = $filename;
-                $bot->avatar_url = asset('storage/avatars/' . $filename);
-            } catch (\Exception $e) {
-                return response()->json([
-                    'message' => 'The avatar failed to upload.',
-                    'errors' => [
-                        'avatar' => ['The avatar failed to upload.']
-                    ]
-                ], 422);
-            }
+            $filename = time() . '_' . $avatar->getClientOriginalName();
+            $avatar->storeAs('public/avatars', $filename);
+            $bot->avatar = $filename;
+            $bot->avatar_url = asset('storage/avatars/' . $filename);
         }
 
         $bot->save();
