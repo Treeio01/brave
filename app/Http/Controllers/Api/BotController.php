@@ -33,7 +33,7 @@ class BotController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'avatar' => 'nullable|file|image|max:2048'
+            'avatar' => 'nullable|file|mimes:jpeg,png,jpg,gif,svg,webp|max:2048'
         ]);
 
         $conference = Conference::findOrFail($conferenceId);
@@ -46,10 +46,41 @@ class BotController extends Controller
 
         if ($request->hasFile('avatar')) {
             $avatar = $request->file('avatar');
-            $filename = time() . '_' . $avatar->getClientOriginalName();
-            $avatar->storeAs('public/avatars', $filename);
-            $bot->avatar = $filename;
-            $bot->avatar_url = asset('storage/avatars/' . $filename);
+
+            // Check if file is valid
+            if (!$avatar->isValid()) {
+                return response()->json([
+                    'message' => 'The avatar failed to upload.',
+                    'errors' => [
+                        'avatar' => ['The avatar failed to upload.']
+                    ]
+                ], 422);
+            }
+
+            // Double-check extension and mime
+            $allowedMimes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif', 'image/svg+xml', 'image/webp'];
+            if (!in_array($avatar->getMimeType(), $allowedMimes)) {
+                return response()->json([
+                    'message' => 'The avatar must be an image of type: jpeg, png, jpg, gif, svg, webp.',
+                    'errors' => [
+                        'avatar' => ['The avatar must be an image of type: jpeg, png, jpg, gif, svg, webp.']
+                    ]
+                ], 422);
+            }
+
+            try {
+                $filename = time() . '_' . preg_replace('/[^A-Za-z0-9_\-\.]/', '', $avatar->getClientOriginalName());
+                $avatar->storeAs('public/avatars', $filename);
+                $bot->avatar = $filename;
+                $bot->avatar_url = asset('storage/avatars/' . $filename);
+            } catch (\Exception $e) {
+                return response()->json([
+                    'message' => 'The avatar failed to upload.',
+                    'errors' => [
+                        'avatar' => ['The avatar failed to upload.']
+                    ]
+                ], 422);
+            }
         }
 
         $bot->save();
