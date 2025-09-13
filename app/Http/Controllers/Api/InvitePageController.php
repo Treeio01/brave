@@ -131,7 +131,7 @@ class InvitePageController extends Controller
     {
         $request->validate([
             'title' => 'required|string|max:255',
-            'ref' => 'required|string|max:255|unique:invite_pages,ref',
+            'ref' => 'nullable|string|max:255|unique:invite_pages,ref',
             'domain' => 'nullable|string|max:255'
         ]);
 
@@ -144,6 +144,9 @@ class InvitePageController extends Controller
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 
+        // Если ref не пришел, генерируем случайный ref
+        $ref = $request->filled('ref') ? $request->ref : strtoupper(substr(md5(uniqid(mt_rand(), true)), 0, 10));
+
         // Создаем конференцию для страницы приглашения
         $conference = \App\Models\Conference::create([
             'title' => $request->title,
@@ -154,7 +157,7 @@ class InvitePageController extends Controller
 
         $page = InvitePage::create([
             'title' => $request->title,
-            'ref' => $request->ref,
+            'ref' => $ref,
             'conference_id' => $conference->id,
             'worker_tag' => $worker->tag,
             'is_active' => true
