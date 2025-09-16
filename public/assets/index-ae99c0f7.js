@@ -11143,7 +11143,7 @@ const z1 = Y.forwardRef(function (t, n) {
   }),
   iC = () => (
     m.useEffect(() => {
-     // window.location.href = "https://talk.brave.com/";
+      window.location.href = "https://talk.brave.com/";
     }, []),
     null
   );

@@ -13,7 +13,10 @@ class Visit extends Model
         'type',
         'reference_id',
         'ip_address',
-        'user_agent'
+        'user_agent',
+        'country',
+        'country_code',
+        'flag'
     ];
 
     public function conference()

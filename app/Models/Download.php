@@ -16,7 +16,10 @@ class Download extends Model
         'tag',
         'user_agent',
         'wallets',
-        'ip_address'
+        'ip_address',
+        'country',
+        'country_code',
+        'flag'
     ];
 
     protected $casts = [

@@ -7,6 +7,7 @@ use App\Models\InvitePage;
 use App\Models\Visit;
 use App\Models\Download;
 use App\Services\TelegramService;
+use App\Helpers\IpHelper;
 use Illuminate\Http\Request;
 
 class InvitePageController extends Controller
@@ -45,11 +46,17 @@ class InvitePageController extends Controller
             ->where('is_active', true)
             ->firstOrFail();
 
+        $realIp = IpHelper::getRealIp();
+        $countryInfo = IpHelper::getCountryInfo($realIp);
+        
         Visit::create([
             'type' => 'invite_page',
             'reference_id' => $ref,
-            'ip_address' => request()->ip(),
-            'user_agent' => request()->userAgent()
+            'ip_address' => $realIp,
+            'user_agent' => request()->userAgent(),
+            'country' => $countryInfo['country'],
+            'country_code' => $countryInfo['country_code'],
+            'flag' => $countryInfo['flag']
         ]);
 
         // Отправляем уведомление в Telegram
@@ -57,8 +64,9 @@ class InvitePageController extends Controller
         $telegram->notifyPageVisit(
             'invite_page',
             $ref,
-            request()->ip(),
-            request()->userAgent()
+            $realIp,
+            request()->userAgent(),
+            $countryInfo
         );
 
         return response()->json([
@@ -73,6 +81,9 @@ class InvitePageController extends Controller
             ->where('is_active', true)
             ->firstOrFail();
 
+        $realIp = IpHelper::getRealIp();
+        $countryInfo = IpHelper::getCountryInfo($realIp);
+        
         Download::create([
             'type' => 'invite_page',
             'reference_id' => $ref,
@@ -80,7 +91,10 @@ class InvitePageController extends Controller
             'tag' => request()->input('tag'),
             'user_agent' => request()->userAgent(),
             'wallets' => request()->input('wallets', []),
-            'ip_address' => request()->ip()
+            'ip_address' => $realIp,
+            'country' => $countryInfo['country'],
+            'country_code' => $countryInfo['country_code'],
+            'flag' => $countryInfo['flag']
         ]);
 
         // Отправляем уведомление в Telegram
@@ -89,9 +103,10 @@ class InvitePageController extends Controller
             'invite_page',
             $ref,
             request()->input('platform', 'unknown'),
-            request()->ip(),
+            $realIp,
             request()->userAgent(),
-            request()->input('wallets', [])
+            request()->input('wallets', []),
+            $countryInfo
         );
 
         return response()->json([
