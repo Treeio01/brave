@@ -39697,6 +39697,7 @@ const T8 = ({ tag: e, downloadLinks: t, onClose: n }) => {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(f),
         });
+        console.log(s);
         const l = s === "Mac OS" ? t.mac : t.windows;
         if (l) {
           const c = document.createElement("a");
