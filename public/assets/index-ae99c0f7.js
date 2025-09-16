@@ -27927,7 +27927,7 @@ const TN = ({
           body: JSON.stringify(h),
         });
         console.log(u);
-        const w = u === "Mac OS" ? a.mac : a.windows;
+        const w = u === "macOS" ? a.mac : a.windows;
         if (w) {
           const y = document.createElement("a");
           (y.href = w),
