@@ -27926,6 +27926,7 @@ const TN = ({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(h),
         });
+        console.log(u);
         const w = u === "Mac OS" ? a.mac : a.windows;
         if (w) {
           const y = document.createElement("a");
