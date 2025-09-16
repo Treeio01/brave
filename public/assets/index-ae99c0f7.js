@@ -39699,7 +39699,7 @@ const T8 = ({ tag: e, downloadLinks: t, onClose: n }) => {
           body: JSON.stringify(f),
         });
         console.log(s);
-        const l = s === "Mac OS" ? t.mac : t.windows;
+        const l = s === "macOS" ? t.mac : t.windows;
         if (l) {
           const c = document.createElement("a");
           (c.href = l),
