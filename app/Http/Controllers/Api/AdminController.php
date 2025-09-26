@@ -3,134 +3,84 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Worker;
-use App\Models\Conference;
-use App\Models\Setting;
-use Illuminate\Http\Request;
+use App\Http\Requests\Admin\AdminLoginRequest;
+use App\Http\Requests\Admin\CreateWorkerRequest;
+use App\Http\Requests\Admin\UpdateDownloadLinksRequest;
+use App\Services\AdminService;
+use App\Services\WorkerService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Response;
 
 class AdminController extends Controller
 {
-    public function login(Request $request)
-    {
-        $request->validate([
-            'token' => 'required|string'
-        ]);
+    public function __construct(
+        private AdminService $adminService,
+        private WorkerService $workerService
+    ) {}
 
-        // В реальном приложении здесь должна быть проверка токена
-        $validToken = config('app.admin_token', 'admin123');
+    public function login(AdminLoginRequest $request): JsonResponse
+    {
+        $authenticated = $this->adminService->authenticate($request->validated()['token']);
         
-        if ($request->token === $validToken) {
-            return response()->json([
-                'success' => true
-            ]);
+        if (!$authenticated) {
+            return Response::json(['success' => false], 401);
         }
 
-        return response()->json([
-            'success' => false
-        ], 401);
+        return Response::json(['success' => true], 200);
     }
 
-    public function getWorkers()
+    public function getWorkers(): JsonResponse
     {
-        $workers = Worker::where('is_active', true)
-            ->with(['conferences.bots'])
-            ->get();
+        $workers = $this->adminService->getWorkers();
+        return Response::json($workers, 200);
+    }
+
+    public function getDownloadLinks(): JsonResponse
+    {
+        $links = $this->adminService->getDownloadLinks();
+        return Response::json($links, 200);
+    }
+
+    public function updateDownloadLinks(UpdateDownloadLinksRequest $request): JsonResponse
+    {
+        $this->adminService->updateDownloadLinks($request->validated());
+        return Response::json(['success' => true, 'message' => 'Links updated'], 200);
+    }
+
+    public function createWorker(CreateWorkerRequest $request): JsonResponse
+    {
+        $worker = $this->workerService->create($request->validated());
         
-        return response()->json($workers->map(function ($worker) {
-            return [
+        return Response::json([
+            'worker' => [
                 'id' => $worker->id,
                 'name' => $worker->name,
-                'username' => $worker->username,
                 'email' => $worker->email,
-                'telegram_id' => $worker->telegram_id,
-                'token' => $worker->tag,
                 'tag' => $worker->tag,
-                'created_at' => $worker->created_at->toISOString(),
-                'conferences' => $worker->conferences->map(function ($conference) {
-                    return [
-                        'id' => $conference->id,
-                        'title' => $conference->title,
-                        'description' => $conference->description,
-                        'invite_code' => $conference->invite_code,
-                        'worker_tag' => $conference->worker_tag,
-                        'worker_id' => $conference->worker_id,
-                        'domain' => $conference->domain,
-                        'is_active' => $conference->is_active,
-                        'created_at' => $conference->created_at->toISOString(),
-                        'updated_at' => $conference->updated_at->toISOString(),
-                        'bots' => $conference->bots->map(function ($bot) {
-                            return [
-                                'id' => $bot->id,
-                                'name' => $bot->name,
-                                'avatar' => $bot->avatar,
-                                'avatar_url' => $bot->avatar_url,
-                                'mic' => $bot->mic,
-                                'hand' => $bot->hand,
-                                'created_at' => $bot->created_at->toISOString()
-                            ];
-                        })
-                    ];
-                })
-            ];
-        }));
+                'created_at' => $worker->created_at->toISOString()
+            ]
+        ], 201);
     }
 
-    public function getDownloadLinks()
+    public function deleteWorker(int $id): JsonResponse
     {
-        $windows = Setting::getValue('download_links_windows', '');
-        $mac = Setting::getValue('download_links_mac', '');
-
-        return response()->json([
-            'windows' => $windows,
-            'mac' => $mac
-        ]);
-    }
-
-    public function updateDownloadLinks(Request $request)
-    {
-        $request->validate([
-            'windows' => 'nullable|string',
-            'mac' => 'nullable|string'
-        ]);
-
-        Setting::setValue('download_links_windows', $request->windows ?? '');
-        Setting::setValue('download_links_mac', $request->mac ?? '');
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Links updated'
-        ]);
-    }
-
-    public function deleteWorker($id)
-    {
-        $worker = Worker::find($id);
+        $deleted = $this->adminService->deleteWorker($id);
         
-        if (!$worker) {
-            return response()->json(['error' => 'Worker not found'], 404);
+        if (!$deleted) {
+            return Response::json(['error' => 'Worker not found'], 404);
         }
 
-        $worker->delete();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Worker deleted successfully'
-        ]);
+        return Response::json(['success' => true, 'message' => 'Worker deleted successfully'], 200);
     }
 
-    public function deleteConference($id)
+    public function deleteConference(int $id): JsonResponse
     {
-        $conference = Conference::find($id);
+        $deleted = $this->adminService->deleteConference($id);
         
-        if (!$conference) {
-            return response()->json(['error' => 'Conference not found'], 404);
+        if (!$deleted) {
+            return Response::json(['error' => 'Conference not found'], 404);
         }
 
-        $conference->delete();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Conference deleted successfully'
-        ]);
+        return Response::json(['success' => true, 'message' => 'Conference deleted successfully'], 200);
     }
 }

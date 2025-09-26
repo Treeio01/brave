@@ -34,4 +34,29 @@ class Worker extends Authenticatable
     {
         return $this->hasMany(Conference::class);
     }
+
+    public function getDisplayNameAttribute(): string
+    {
+        return $this->username ?? $this->name;
+    }
+
+    public function getIsActiveAttribute($value): bool
+    {
+        return (bool) $value;
+    }
+
+    public function setIsActiveAttribute($value): void
+    {
+        $this->attributes['is_active'] = (bool) $value;
+    }
+
+    public function getTagAttribute($value): string
+    {
+        return $value ?? '';
+    }
+
+    public function setTagAttribute($value): void
+    {
+        $this->attributes['tag'] = $value ?: 'worker_' . strtoupper(substr(md5(uniqid()), 0, 8));
+    }
 }

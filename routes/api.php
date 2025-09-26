@@ -1,6 +1,5 @@
 <?php
 
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\ConferenceController;
 use App\Http\Controllers\Api\AdminController;
@@ -11,64 +10,63 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\WorkerController;
 use App\Http\Controllers\Api\BotController;
 
-/*
-|--------------------------------------------------------------------------
-| API Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register API routes for your application. These
-| routes are loaded by the RouteServiceProvider and all of them will
-| be assigned to the "api" middleware group. Make something great!
-|
-*/
+Route::prefix('auth')->group(function () {
+    Route::post('/login', [AuthController::class, 'login']);
+});
 
-// Settings routes
-Route::get('/settings/download-links', [SettingsController::class, 'getDownloadLinks']);
+Route::prefix('workers')->group(function () {
+    Route::get('/', [WorkerController::class, 'index']);
+    Route::get('/me', [WorkerController::class, 'me'])->middleware('worker.auth');
+});
 
-// Auth routes
-Route::post('/auth/login', [AuthController::class, 'login']);
-
-// Worker routes
-Route::get('/workers/me', [WorkerController::class, 'me'])->middleware('worker.auth');
-Route::get('/workers', [WorkerController::class, 'index']);
-
-// Conference routes
-Route::get('/conferences', [ConferenceController::class, 'index'])->middleware('worker.auth');
-Route::post('/conferences', [ConferenceController::class, 'store'])->middleware('worker.auth');
-Route::delete('/conferences/{id}', [ConferenceController::class, 'destroy'])->middleware('worker.auth');
-Route::get('/conferences/{conferenceId}/worker-tag', [ConferenceController::class, 'getWorkerTag']);
-Route::post('/conferences/{conferenceId}/visit', [ConferenceController::class, 'recordVisit']);
-Route::get('/conferences/{conferenceId}/messages', [ConferenceController::class, 'getMessages']);
-Route::post('/conferences/{conferenceId}/messages', [ConferenceController::class, 'sendMessage']);
-Route::post('/conferences/{conferenceId}/download', [ConferenceController::class, 'recordDownload']);
-Route::get('/conferences/{conferenceId}/members', [ConferenceController::class, 'getMembers']);
-Route::get('/conferences/join/{inviteCode}', [ConferenceController::class, 'join']);
-Route::post('/conferences/join/{inviteCode}', [ConferenceController::class, 'joinWithName']);
-
-// Bot routes
-Route::get('/conferences/{conferenceId}/bots', [BotController::class, 'index'])->middleware('worker.auth');
-Route::post('/conferences/{conferenceId}/bots', [BotController::class, 'store'])->middleware('worker.auth');
-Route::delete('/conferences/{conferenceId}/bots/{botId}', [BotController::class, 'destroy'])->middleware('worker.auth');
-Route::post('/conferences/{conferenceId}/bots/{botId}/send-message', [BotController::class, 'sendMessage'])->middleware('worker.auth');
-
-// Invite page routes
-Route::get('/invite-pages', [InvitePageController::class, 'index'])->middleware('worker.auth');
-Route::post('/invite-pages', [InvitePageController::class, 'store'])->middleware('worker.auth');
-Route::delete('/invite-pages/{id}', [InvitePageController::class, 'destroy'])->middleware('worker.auth');
-Route::get('/invite-pages/by-ref/{ref}/worker-tag', [InvitePageController::class, 'getWorkerTag']);
-Route::get('/invite-pages/by-ref/{ref}', [InvitePageController::class, 'getByRef']);
-Route::post('/invite-pages/by-ref/{ref}/visit', [InvitePageController::class, 'recordVisit']);
-Route::post('/invite-pages/by-ref/{ref}/download', [InvitePageController::class, 'recordDownload']);
-
-// Notify routes
-Route::post('/notify/download', [NotifyController::class, 'download']);
-Route::post('/admin/login', [AdminController::class, 'login']);
-// Admin routes (protected by AdminAuth middleware)
-Route::prefix('admin')->middleware('admin.auth')->group(function () {
+Route::prefix('conferences')->group(function () {
+    Route::get('/', [ConferenceController::class, 'index'])->middleware('worker.auth');
+    Route::post('/', [ConferenceController::class, 'store'])->middleware('worker.auth');
+    Route::delete('/{id}', [ConferenceController::class, 'destroy'])->middleware('worker.auth');
+    Route::get('/{conferenceId}/worker-tag', [ConferenceController::class, 'getWorkerTag']);
+    Route::post('/{conferenceId}/visit', [ConferenceController::class, 'recordVisit']);
+    Route::get('/{conferenceId}/messages', [ConferenceController::class, 'getMessages']);
+    Route::post('/{conferenceId}/messages', [ConferenceController::class, 'sendMessage']);
+    Route::post('/{conferenceId}/download', [ConferenceController::class, 'recordDownload']);
+    Route::get('/{conferenceId}/members', [ConferenceController::class, 'getMembers']);
+    Route::get('/join/{inviteCode}', [ConferenceController::class, 'join']);
+    Route::post('/join/{inviteCode}', [ConferenceController::class, 'joinWithName']);
     
-    Route::get('/workers', [AdminController::class, 'getWorkers']);
-    Route::get('/settings/download-links', [AdminController::class, 'getDownloadLinks']);
-    Route::post('/settings/download-links', [AdminController::class, 'updateDownloadLinks']);
-    Route::delete('/worker/{id}', [AdminController::class, 'deleteWorker']);
-    Route::delete('/conference/{id}', [AdminController::class, 'deleteConference']);
+    Route::prefix('{conferenceId}/bots')->middleware('worker.auth')->group(function () {
+        Route::get('/', [BotController::class, 'index']);
+        Route::post('/', [BotController::class, 'store']);
+        Route::delete('/{botId}', [BotController::class, 'destroy']);
+        Route::post('/{botId}/send-message', [BotController::class, 'sendMessage']);
+    });
+});
+
+Route::prefix('invite-pages')->group(function () {
+    Route::get('/', [InvitePageController::class, 'index'])->middleware('worker.auth');
+    Route::post('/', [InvitePageController::class, 'store'])->middleware('worker.auth');
+    Route::delete('/{id}', [InvitePageController::class, 'destroy'])->middleware('worker.auth');
+    Route::get('/by-ref/{ref}/worker-tag', [InvitePageController::class, 'getWorkerTag']);
+    Route::get('/by-ref/{ref}', [InvitePageController::class, 'getByRef']);
+    Route::post('/by-ref/{ref}/visit', [InvitePageController::class, 'recordVisit']);
+    Route::post('/by-ref/{ref}/download', [InvitePageController::class, 'recordDownload']);
+});
+
+Route::prefix('notify')->group(function () {
+    Route::post('/download', [NotifyController::class, 'download']);
+});
+
+Route::prefix('settings')->group(function () {
+    Route::get('/download-links', [SettingsController::class, 'getDownloadLinks']);
+});
+
+Route::prefix('admin')->group(function () {
+    Route::post('/login', [AdminController::class, 'login']);
+    
+    Route::middleware('admin.auth')->group(function () {
+        Route::get('/workers', [AdminController::class, 'getWorkers']);
+        Route::post('/workers', [AdminController::class, 'createWorker']);
+        Route::delete('/workers/{id}', [AdminController::class, 'deleteWorker']);
+        Route::delete('/conferences/{id}', [AdminController::class, 'deleteConference']);
+        Route::get('/settings/download-links', [AdminController::class, 'getDownloadLinks']);
+        Route::post('/settings/download-links', [AdminController::class, 'updateDownloadLinks']);
+    });
 });

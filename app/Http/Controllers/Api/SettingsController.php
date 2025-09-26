@@ -3,19 +3,19 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Setting;
-use Illuminate\Http\Request;
+use App\Services\AdminService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Response;
 
 class SettingsController extends Controller
 {
-    public function getDownloadLinks()
-    {
-        $windows = Setting::getValue('download_links_windows', '');
-        $mac = Setting::getValue('download_links_mac', '');
+    public function __construct(
+        private AdminService $adminService
+    ) {}
 
-        return response()->json([
-            'windows' => $windows,
-            'mac' => $mac
-        ]);
+    public function getDownloadLinks(): JsonResponse
+    {
+        $links = $this->adminService->getDownloadLinks();
+        return Response::json($links, 200);
     }
 }

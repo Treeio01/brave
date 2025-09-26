@@ -19,4 +19,24 @@ class Message extends Model
     {
         return $this->belongsTo(Conference::class);
     }
+
+    public function getSenderAttribute($value): string
+    {
+        return $value ?? 'Unknown';
+    }
+
+    public function getTextAttribute($value): string
+    {
+        return $value ?? '';
+    }
+
+    public function setSenderAttribute($value): void
+    {
+        $this->attributes['sender'] = $value ?: 'Unknown';
+    }
+
+    public function setTextAttribute($value): void
+    {
+        $this->attributes['text'] = $value ?: '';
+    }
 }

