@@ -31,7 +31,6 @@ class SetupTelegram extends Command
                 ]);
                 
                 if ($testResponse->successful()) {
-                    $this->info("Test message sent successfully!");
                     $this->info("Add these to your .env file:");
                     $this->line("TELEGRAM_BOT_TOKEN={$botToken}");
                     $this->line("TELEGRAM_CHAT_ID={$chatId}");
