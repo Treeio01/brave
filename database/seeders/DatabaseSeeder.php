@@ -22,8 +22,6 @@ class DatabaseSeeder extends Seeder
             'key' => 'download_links_mac',
             'value' => 'https://example.com/app-mac.dmg'
         ]);
-
-        // Create sample conference
         $conference = \App\Models\Conference::create([
             'invite_code' => 'sample123',
             'title' => 'Sample Conference',
@@ -32,7 +30,6 @@ class DatabaseSeeder extends Seeder
             'is_active' => true
         ]);
 
-        // Create sample bots for the conference
         \App\Models\Bot::create([
             'conference_id' => $conference->id,
             'name' => 'Bot 1',
@@ -51,7 +48,6 @@ class DatabaseSeeder extends Seeder
             'avatar_url' => 'https://example.com/bot2.jpg'
         ]);
 
-        // Create sample invite page
         \App\Models\InvitePage::create([
             'ref' => 'sample-ref',
             'title' => 'Sample Invite Page',
@@ -61,7 +57,7 @@ class DatabaseSeeder extends Seeder
             'is_active' => true
         ]);
 
-        // Create sample worker
+
         $worker = \App\Models\Worker::create([
             'name' => 'Sample Worker',
             'username' => 'sample_worker',
@@ -72,7 +68,7 @@ class DatabaseSeeder extends Seeder
             'is_active' => true
         ]);
 
-        // Update conference with worker_id
+
         $conference->update([
             'worker_id' => $worker->id
         ]);

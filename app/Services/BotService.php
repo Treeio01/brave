@@ -5,12 +5,13 @@ namespace App\Services;
 use App\Models\Bot;
 use App\Models\Conference;
 use App\Models\Message;
+use App\Models\Worker;
 
 class BotService
 {
-    public function getByConference(int $conferenceId): array
+    public function getByConference(Worker $worker, int $conferenceId): array
     {
-        $conference = Conference::findOrFail($conferenceId);
+        $conference = $this->getOwnedConference($worker, $conferenceId);
         $bots = $conference->bots;
 
         return $bots->map(function ($bot) {
@@ -25,9 +26,9 @@ class BotService
         })->toArray();
     }
 
-    public function create(int $conferenceId, array $data): array
+    public function create(Worker $worker, int $conferenceId, array $data): array
     {
-        $conference = Conference::findOrFail($conferenceId);
+        $conference = $this->getOwnedConference($worker, $conferenceId);
 
         $bot = new Bot();
         $bot->conference_id = $conferenceId;
@@ -55,10 +56,13 @@ class BotService
         ];
     }
 
-    public function delete(int $conferenceId, int $botId): bool
+    public function delete(Worker $worker, int $conferenceId, int $botId): bool
     {
         $bot = Bot::where('conference_id', $conferenceId)
             ->where('id', $botId)
+            ->whereHas('conference', function ($query) use ($worker) {
+                $query->where('worker_id', $worker->id);
+            })
             ->first();
 
         if (!$bot) {
@@ -68,10 +72,13 @@ class BotService
         return $bot->delete();
     }
 
-    public function sendMessage(int $conferenceId, int $botId, string $text): bool
+    public function sendMessage(Worker $worker, int $conferenceId, int $botId, string $text): bool
     {
         $bot = Bot::where('conference_id', $conferenceId)
             ->where('id', $botId)
+            ->whereHas('conference', function ($query) use ($worker) {
+                $query->where('worker_id', $worker->id);
+            })
             ->firstOrFail();
 
         Message::create([
@@ -81,5 +88,12 @@ class BotService
         ]);
 
         return true;
+    }
+
+    private function getOwnedConference(Worker $worker, int $conferenceId): Conference
+    {
+        return Conference::where('id', $conferenceId)
+            ->where('worker_id', $worker->id)
+            ->firstOrFail();
     }
 }

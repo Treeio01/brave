@@ -7,7 +7,9 @@ use App\Http\Requests\Bot\CreateBotRequest;
 use App\Http\Requests\Bot\SendBotMessageRequest;
 use App\Services\BotService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Response;
+use App\Models\Worker;
 
 class BotController extends Controller
 {
@@ -15,22 +17,43 @@ class BotController extends Controller
         private BotService $botService
     ) {}
 
-    public function index(int $conferenceId): JsonResponse
+    public function index(Request $request, int $conferenceId): JsonResponse
     {
-        $bots = $this->botService->getByConference($conferenceId);
+
+        $worker = $request->attributes->get('worker');
+
+        if (!$worker) {
+            return Response::json(['error' => 'Unauthorized'], 401);
+        }
+
+        $bots = $this->botService->getByConference($worker, $conferenceId);
         return Response::json(['bots' => $bots], 200);
     }
 
     public function store(CreateBotRequest $request, int $conferenceId): JsonResponse
     {
-        $bot = $this->botService->create($conferenceId, $request->validated());
+
+        $worker = $request->attributes->get('worker');
+
+        if (!$worker) {
+            return Response::json(['error' => 'Unauthorized'], 401);
+        }
+
+        $bot = $this->botService->create($worker, $conferenceId, $request->validated());
         return Response::json(['bot' => $bot], 201);
     }
 
-    public function destroy(int $conferenceId, int $botId): JsonResponse
+    public function destroy(Request $request, int $conferenceId, int $botId): JsonResponse
     {
-        $deleted = $this->botService->delete($conferenceId, $botId);
-        
+
+        $worker = $request->attributes->get('worker');
+
+        if (!$worker) {
+            return Response::json(['error' => 'Unauthorized'], 401);
+        }
+
+        $deleted = $this->botService->delete($worker, $conferenceId, $botId);
+
         if (!$deleted) {
             return Response::json(['error' => 'Bot not found'], 404);
         }
@@ -40,7 +63,14 @@ class BotController extends Controller
 
     public function sendMessage(SendBotMessageRequest $request, int $conferenceId, int $botId): JsonResponse
     {
-        $this->botService->sendMessage($conferenceId, $botId, $request->validated()['text']);
+
+        $worker = $request->attributes->get('worker');
+
+        if (!$worker) {
+            return Response::json(['error' => 'Unauthorized'], 401);
+        }
+
+        $this->botService->sendMessage($worker, $conferenceId, $botId, $request->validated()['text']);
         return Response::json(['success' => true, 'message' => 'Message sent'], 200);
     }
 }

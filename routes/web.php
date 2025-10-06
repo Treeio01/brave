@@ -62,7 +62,7 @@ Route::prefix("admin")->group(function () {
     Route::prefix("workers")->group(function () {
         Route::get('/create', [App\Http\Controllers\AdminController::class, 'createWorker'])->name('admin.worker.create');
         Route::post('/', [App\Http\Controllers\AdminController::class, 'storeWorker'])->name('admin.worker.store');
-        Route::delete('//{id}', [App\Http\Controllers\AdminController::class, 'deleteWorker'])->name('admin.worker.delete');
+        Route::delete('/{id}', [App\Http\Controllers\AdminController::class, 'deleteWorker'])->name('admin.worker.delete');
 
     });
 });

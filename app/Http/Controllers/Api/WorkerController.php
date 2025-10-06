@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Services\WorkerService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Models\Worker;
 use Illuminate\Support\Facades\Response;
 
 class WorkerController extends Controller
@@ -16,12 +17,14 @@ class WorkerController extends Controller
 
     public function me(Request $request): JsonResponse
     {
-        $token = $request->bearerToken();
-        $data = $this->workerService->getWorkerWithConferences($token);
 
-        if (!$data) {
+        $worker = $request->attributes->get('worker');
+
+        if (!$worker) {
             return Response::json(['error' => 'Unauthorized'], 401);
         }
+
+        $data = $this->workerService->getWorkerWithConferences($worker);
 
         return Response::json($data, 200);
     }

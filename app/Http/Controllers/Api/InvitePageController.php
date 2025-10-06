@@ -8,6 +8,7 @@ use App\Services\InvitePageService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Response;
+use App\Models\Worker;
 
 class InvitePageController extends Controller
 {
@@ -18,7 +19,7 @@ class InvitePageController extends Controller
     public function getWorkerTag(string $ref): JsonResponse
     {
         $tag = $this->invitePageService->getWorkerTag($ref);
-        
+
         if (!$tag) {
             return Response::json(['error' => 'Invite page not found'], 404);
         }
@@ -29,7 +30,7 @@ class InvitePageController extends Controller
     public function getByRef(string $ref): JsonResponse
     {
         $page = $this->invitePageService->getByRef($ref);
-        
+
         if (!$page) {
             return Response::json(['error' => 'Invite page not found'], 404);
         }
@@ -50,24 +51,44 @@ class InvitePageController extends Controller
         return Response::json(['success' => true, 'message' => 'Download recorded'], 200);
     }
 
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-        $pages = $this->invitePageService->getAllActive();
+
+        $worker = $request->attributes->get('worker');
+
+        if (!$worker) {
+            return Response::json(['error' => 'Unauthorized'], 401);
+        }
+
+        $pages = $this->invitePageService->getAllActive($worker);
         return Response::json(['pages' => $pages], 200);
     }
 
     public function store(CreateInvitePageRequest $request): JsonResponse
     {
-        $token = $request->bearerToken();
-        $page = $this->invitePageService->create($request->validated(), $token);
+
+        $worker = $request->attributes->get('worker');
+
+        if (!$worker) {
+            return Response::json(['error' => 'Unauthorized'], 401);
+        }
+
+        $page = $this->invitePageService->create($request->validated(), $worker);
 
         return Response::json(['page' => $page], 201);
     }
 
-    public function destroy(int $id): JsonResponse
+    public function destroy(Request $request, int $id): JsonResponse
     {
-        $deleted = $this->invitePageService->delete($id);
-        
+
+        $worker = $request->attributes->get('worker');
+
+        if (!$worker) {
+            return Response::json(['error' => 'Unauthorized'], 401);
+        }
+
+        $deleted = $this->invitePageService->delete($worker, $id);
+
         if (!$deleted) {
             return Response::json(['error' => 'Page not found'], 404);
         }

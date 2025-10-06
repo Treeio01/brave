@@ -43,14 +43,8 @@ class WorkerService
         return $worker;
     }
 
-    public function getWorkerWithConferences(string $token): ?array
+    public function getWorkerWithConferences(Worker $worker): array
     {
-        $worker = $this->authenticate($token);
-        
-        if (!$worker) {
-            return null;
-        }
-
         $conferences = $worker->conferences()
             ->where('is_active', true)
             ->with('bots')

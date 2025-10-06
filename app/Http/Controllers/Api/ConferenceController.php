@@ -10,6 +10,7 @@ use App\Services\ConferenceService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Response;
+use App\Models\Worker;
 
 class ConferenceController extends Controller
 {
@@ -45,7 +46,7 @@ class ConferenceController extends Controller
     public function join(string $inviteCode): JsonResponse
     {
         $data = $this->conferenceService->join($inviteCode);
-        
+
         if (!$data) {
             return Response::json(['error' => 'Conference not found'], 404);
         }
@@ -56,7 +57,7 @@ class ConferenceController extends Controller
     public function joinWithName(JoinConferenceRequest $request, string $inviteCode): JsonResponse
     {
         $data = $this->conferenceService->join($inviteCode, $request->validated()['name']);
-        
+
         if (!$data) {
             return Response::json(['error' => 'Conference not found'], 404);
         }
@@ -64,16 +65,29 @@ class ConferenceController extends Controller
         return Response::json(['conferenceId' => $data['conference']['id']], 200);
     }
 
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-        $conferences = $this->conferenceService->getAllActive();
+
+        $worker = $request->attributes->get('worker');
+
+        if (!$worker) {
+            return Response::json(['error' => 'Unauthorized'], 401);
+        }
+
+        $conferences = $this->conferenceService->getAllActive($worker);
         return Response::json(['conferences' => $conferences], 200);
     }
 
     public function store(CreateConferenceRequest $request): JsonResponse
     {
-        $token = $request->bearerToken();
-        $conference = $this->conferenceService->create($request->validated(), $token);
+
+        $worker = $request->attributes->get('worker');
+
+        if (!$worker) {
+            return Response::json(['error' => 'Unauthorized'], 401);
+        }
+
+        $conference = $this->conferenceService->create($request->validated(), $worker);
 
         return Response::json([
             'conference' => [
@@ -86,10 +100,17 @@ class ConferenceController extends Controller
         ], 201);
     }
 
-    public function destroy(int $id): JsonResponse
+    public function destroy(Request $request, int $id): JsonResponse
     {
-        $deleted = $this->conferenceService->delete($id);
-        
+
+        $worker = $request->attributes->get('worker');
+
+        if (!$worker) {
+            return Response::json(['error' => 'Unauthorized'], 401);
+        }
+
+        $deleted = $this->conferenceService->delete($worker, $id);
+
         if (!$deleted) {
             return Response::json(['error' => 'Conference not found'], 404);
         }

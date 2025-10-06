@@ -17,12 +17,8 @@ class InvitePageService
         private TelegramService $telegramService
     ) {}
 
-    public function create(array $data, string $workerToken): array
+    public function create(array $data, Worker $worker): array
     {
-        $worker = Worker::where('tag', $workerToken)
-            ->where('is_active', true)
-            ->firstOrFail();
-
         $ref = $data['ref'] ?? strtoupper(substr(md5(uniqid(mt_rand(), true)), 0, 10));
 
         $conference = Conference::create([
@@ -144,9 +140,10 @@ class InvitePageService
         return true;
     }
 
-    public function getAllActive(): array
+    public function getAllActive(Worker $worker): array
     {
         return InvitePage::where('is_active', true)
+            ->where('worker_tag', $worker->tag)
             ->get()
             ->map(function ($page) {
                 return [
@@ -161,9 +158,11 @@ class InvitePageService
             ->toArray();
     }
 
-    public function delete(int $id): bool
+    public function delete(Worker $worker, int $id): bool
     {
-        $page = InvitePage::find($id);
+        $page = InvitePage::where('id', $id)
+            ->where('worker_tag', $worker->tag)
+            ->first();
         
         if (!$page) {
             return false;

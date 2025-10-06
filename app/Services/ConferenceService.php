@@ -17,12 +17,8 @@ class ConferenceService
         private TelegramService $telegramService
     ) {}
 
-    public function create(array $data, string $workerToken): Conference
+    public function create(array $data, Worker $worker): Conference
     {
-        $worker = Worker::where('tag', $workerToken)
-            ->where('is_active', true)
-            ->firstOrFail();
-
         $conference = Conference::create([
             'title' => $data['title'],
             'invite_code' => $this->generateInviteCode(),
@@ -199,9 +195,10 @@ class ConferenceService
         ];
     }
 
-    public function getAllActive(): array
+    public function getAllActive(Worker $worker): array
     {
         return Conference::where('is_active', true)
+            ->where('worker_id', $worker->id)
             ->get()
             ->map(function ($conference) {
                 return [
@@ -215,9 +212,11 @@ class ConferenceService
             ->toArray();
     }
 
-    public function delete(int $id): bool
+    public function delete(Worker $worker, int $id): bool
     {
-        $conference = Conference::find($id);
+        $conference = Conference::where('id', $id)
+            ->where('worker_id', $worker->id)
+            ->first();
         
         if (!$conference) {
             return false;

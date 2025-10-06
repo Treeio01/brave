@@ -17,7 +17,7 @@ class WorkerAuth
     public function handle(Request $request, Closure $next): Response
     {
         $token = $request->bearerToken();
-        
+
         if (!$token) {
             return response()->json(['error' => 'Token required'], 401);
         }
@@ -30,7 +30,11 @@ class WorkerAuth
             return response()->json(['error' => 'Invalid token'], 401);
         }
 
-        // Добавляем worker в request для использования в контроллерах
+
+        $request->attributes->set('worker', $worker);
+        $request->setUserResolver(fn () => $worker);
+
+
         $request->merge(['worker' => $worker]);
 
         return $next($request);
