@@ -11,6 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (Schema::hasTable('conferences')) {
+            return;
+        }
+
         Schema::create('conferences', function (Blueprint $table) {
             $table->id();
             $table->string('invite_code')->unique();

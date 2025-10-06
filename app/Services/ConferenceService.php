@@ -27,6 +27,7 @@ class ConferenceService
             'title' => $data['title'],
             'invite_code' => $this->generateInviteCode(),
             'worker_tag' => $worker->tag,
+            'worker_id' => $worker->id,
             'is_active' => true
         ]);
 

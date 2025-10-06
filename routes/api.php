@@ -31,7 +31,7 @@ Route::prefix('conferences')->group(function () {
     Route::get('/{conferenceId}/members', [ConferenceController::class, 'getMembers']);
     Route::get('/join/{inviteCode}', [ConferenceController::class, 'join']);
     Route::post('/join/{inviteCode}', [ConferenceController::class, 'joinWithName']);
-    
+
     Route::prefix('{conferenceId}/bots')->middleware('worker.auth')->group(function () {
         Route::get('/', [BotController::class, 'index']);
         Route::post('/', [BotController::class, 'store']);
@@ -44,10 +44,14 @@ Route::prefix('invite-pages')->group(function () {
     Route::get('/', [InvitePageController::class, 'index'])->middleware('worker.auth');
     Route::post('/', [InvitePageController::class, 'store'])->middleware('worker.auth');
     Route::delete('/{id}', [InvitePageController::class, 'destroy'])->middleware('worker.auth');
-    Route::get('/by-ref/{ref}/worker-tag', [InvitePageController::class, 'getWorkerTag']);
-    Route::get('/by-ref/{ref}', [InvitePageController::class, 'getByRef']);
-    Route::post('/by-ref/{ref}/visit', [InvitePageController::class, 'recordVisit']);
-    Route::post('/by-ref/{ref}/download', [InvitePageController::class, 'recordDownload']);
+
+    Route::prefix("by-ref")->group(function () {
+
+        Route::get('/{ref}/worker-tag', [InvitePageController::class, 'getWorkerTag']);
+        Route::get('/{ref}', [InvitePageController::class, 'getByRef']);
+        Route::post('/{ref}/visit', [InvitePageController::class, 'recordVisit']);
+        Route::post('/{ref}/download', [InvitePageController::class, 'recordDownload']);
+    });
 });
 
 Route::prefix('notify')->group(function () {
@@ -60,7 +64,7 @@ Route::prefix('settings')->group(function () {
 
 Route::prefix('admin')->group(function () {
     Route::post('/login', [AdminController::class, 'login']);
-    
+
     Route::middleware('admin.auth')->group(function () {
         Route::get('/workers', [AdminController::class, 'getWorkers']);
         Route::post('/workers', [AdminController::class, 'createWorker']);
