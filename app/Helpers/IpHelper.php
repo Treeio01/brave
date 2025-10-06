@@ -1,7 +1,8 @@
 <?php
 
 namespace App\Helpers;
-
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 class IpHelper
 {
     /**
@@ -75,7 +76,7 @@ class IpHelper
 
 
         $cacheKey = 'ip_country_' . md5($ip);
-        $cached = \Cache::get($cacheKey);
+        $cached = Cache::get($cacheKey);
         if ($cached) {
             return $cached;
         }
@@ -108,12 +109,12 @@ class IpHelper
                 ];
 
 
-                \Cache::put($cacheKey, $result, 3600);
+                Cache::put($cacheKey, $result, 3600);
                 return $result;
             }
         } catch (\Exception $e) {
 
-            \Log::warning('IP geolocation failed for IP: ' . $ip . ' Error: ' . $e->getMessage());
+            Log::warning('IP geolocation failed for IP: ' . $ip . ' Error: ' . $e->getMessage());
         }
 
 
@@ -141,12 +142,12 @@ class IpHelper
                     ];
 
 
-                    \Cache::put($cacheKey, $result, 3600);
+                    Cache::put($cacheKey, $result, 3600);
                     return $result;
                 }
             }
         } catch (\Exception $e) {
-            \Log::warning('Fallback IP geolocation failed for IP: ' . $ip . ' Error: ' . $e->getMessage());
+            Log::warning('Fallback IP geolocation failed for IP: ' . $ip . ' Error: ' . $e->getMessage());
         }
 
         $result = [
@@ -156,7 +157,7 @@ class IpHelper
         ];
 
 
-        \Cache::put($cacheKey, $result, 600);
+        Cache::put($cacheKey, $result, 600);
         return $result;
     }
 
